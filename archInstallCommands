@@ -1,0 +1,44 @@
+mount /dev/sda3 /mnt  && mkdir /mnt/{boot,home} 
+mount /dev/sda2 /mnt/boot
+mount /dev/sda4 /mnt/home
+
+# éditer /etc/pacman.d/mirrorlist  sur le disque d'install
+
+Server = http://mir.archlinux.fr/$repo/os/$arch
+Server = http://archlinux.cu.be/$repo/os/$arch
+Server = http://archlinux.polymorf.fr/$repo/os/$arch
+Server = http://mirror.de.leaseweb.net/archlinux/$repo/os/$arch
+Server = http://mirror.nl.leaseweb.net/archlinux/$repo/os/$arch
+Server = http://archlinux.vi-di.fr/$repo/os/$arch
+
+pacstrap /mnt base base-devel grub vim
+
+genfstab -U -p /mnt >> /mnt/etc/fstab
+
+arch-chroot /mnt
+
+echo 'LANG="fr_FR.UTF-8"' > /etc/locale.conf
+
+export LANG=fr_FR.UTF-8
+
+locale-gen
+
+echo 'KEYMAP=fr-pc' > /etc/vconsole.conf
+
+ln -s /usr/share/zoneinfo/Europe/Paris /etc/localtime
+
+mkinitcpio -p linux
+
+grub-install --no-floppy --recheck /dev/sda
+
+grub-mkconfig -o /boot/grub/grub.cfg
+
+passwd
+
+exit
+
+umount
+
+reboot
+
+useradd -g users -m -s /bin/bash <nom utilisateur> passwd <nom utilisateur>
