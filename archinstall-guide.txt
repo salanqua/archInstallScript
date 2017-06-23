@@ -12,9 +12,9 @@ vérification des paramètres uefi chargé
 # efivar -l
 
 pacman -S vim terminus-font git
-setfont ter-v32n
+setfont ter-v32n  # cas d'une police illisible car trop petite avec un grand écran
 
-partitionement du disque
+partitionement du disque en gpt
 # gdisk /dev/sda
 première partition 512 Mio en fat32 EF00
 2ème swap (sur disque ssd oui oui) avec l'option discard (à voir si je fais ça ou pas)
@@ -23,12 +23,14 @@ on peut taper les tailles directement en GiB, par exemple 24 GiB avec cgdisk)
 4ème /home le reste
 puis reboot sur la clé
 recommencer e + nomodeset initrd ....
-monter les partitions précédemment créées
+setfont ter-v32n
 formater les partitions précédemment créées (mkfs.vfat -F32 /dev/sda1)
+monter les partitions précédemment formatées
+choix des mirroirs
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 sed -i 's/#Server/Server/' /etc/pacman.s/mirrorlist.bak (ou bien avec vim)
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
-
+(ça peut prendre un certain temps)
 pacstrap -i /mnt base base-devel vim git efibootmgr terminus-font 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
@@ -42,10 +44,11 @@ rm -f /etc/localtime
 ln -s /usr/share/zoneinfo/Europe/Paris /etc/localtime
 hwclock --systohc --utc
 mkinitcpio -p linux
-
+/*
 éditer pacman.conf et décommenter le dépôt multilib 2 lignes /* pas obligé */
 Siglevel = Never
 Server = repo ...
+*/
 
 pacman -Suy
 passwd
@@ -77,3 +80,5 @@ installer le serveur graphique
 pacman -S xorg-server xorg-xinit
 installer nvidia :
 pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings lxdm
+
+Rebooter,  enlever la clé, enjoy.
