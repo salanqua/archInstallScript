@@ -1,4 +1,4 @@
-BIOS CARTE MÈRE
+BIOS CARTE MÈRE ASUS Z170 PRO
 boot           uefi
 fast boot      disabled
 secure boot    disabled
@@ -17,7 +17,7 @@ efivar -l
 pacman -S vim terminus-font git
 setfont ter-v32n
 
-#RÉCUPERER CE FICHIER D'INSTALL AVEC GIT
+# RÉCUPERER CE FICHIER D'INSTALL AVEC GIT
 git clone https://github.com/salanqua/archInstallScript.git
 # lancer chaque commande de ce fichier avec la commande eval $(cat -n fichier | head -j | tail -1)
 # en incrémentant j de la valeur nécessaire à l'exécution de chaque nouvelle commande
@@ -30,7 +30,7 @@ o # pour écraser toutes les données du disque
 # 2ème root / disons 35 GiB
 # 3ème /home le reste
 
-# formater les partitions précédemment créées (mkfs.vfat -F32 /dev/sda1)
+# formater les partitions précédemment créées 
 mkfs.vfat /dev/sda1
 mkfs.ext4 /dev/sda2
 mkfs.ext4 /dev/sda3
@@ -55,16 +55,18 @@ echo "i7-6700k" > /etc/hostname
 echo 'fr_FR.UTF-8 UTF-8' > /etc/locale.gen
 locale-gen
 echo 'LANG=fr_FR.UTF-8' > /etc/locale.conf
-export LANG=fr_FR.UTF-8
 echo 'KEYMAP=fr' > /etc/vconsole.conf
-echo 'FONT=lat9w-16'
+echo 'FONT=lat9w-16' >> /etc/vconsole.conf
 rm -f /etc/localtime
 ln -s /usr/share/zoneinfo/Europe/Paris /etc/localtime
 hwclock --systohc --utc
+export LANG=fr_FR.UTF-8
 mkinitcpio -p linux
-
+# set root pass
 passwd
+# add user
 useradd -G users -s /bin/bash -m username
+# set user pass
 passwd username
 
 pacman -S bash-completion
