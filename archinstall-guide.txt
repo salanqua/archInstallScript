@@ -102,6 +102,6 @@ pacman -S gstreamer0.10-good-plugins gstreamer0.10-ugly-plugins gst-libav gst-pl
 pacman -S gst-plugins-base  gst-plugins-good  gst-plugins-ugly ffmpegthumbnailer
 
 # Install audio apps
-pacman -S pulseaudio pulseaudio-alsa alsa-utils
+pacman -S pulseaudio pulseaudio-alsa alsa-utils firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr
 
 # rebooter en mode graphique cette fois et poursuivre l'install et la config en mode graphique
