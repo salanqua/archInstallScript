@@ -1,84 +1,107 @@
 BIOS CARTE MÈRE
-boot    uefi
-fast    boot disable
-csm     other os
+boot           uefi
+fast boot      disabled
+secure boot    disabled
+csm            other os
 
-AU BOOT DE LA CLÉ USB :
-taper e
-taper nomodeset avant la commande lançant le noyau
-VÉRIFIER LE RÉSEAU AVEC 
+#AU BOOT DE LA CLÉ USB :
+#taper e
+#taper nomodeset avant la commande lançant le noyau
+#VÉRIFIER LE RÉSEAU AVEC 
 ping -c 3 www.free.fr
-vérification des paramètres uefi chargé
-# efivar -l
 
+#vérification des paramètres uefi chargé
+efivar -l
+
+#install de paquets qui rendent bien service
 pacman -S vim terminus-font git
-setfont ter-v32n  # cas d'une police illisible car trop petite avec un grand écran
-
-partitionement du disque en gpt
-# gdisk /dev/sda
-première partition 512 Mio en fat32 EF00
-2ème swap (sur disque ssd oui oui) avec l'option discard (à voir si je fais ça ou pas)
-on peut taper les tailles directement en GiB, par exemple 24 GiB avec cgdisk)
-3ème root / disons 20 GiB
-4ème /home le reste
-puis reboot sur la clé
-recommencer e + nomodeset initrd ....
 setfont ter-v32n
-formater les partitions précédemment créées (mkfs.vfat -F32 /dev/sda1)
-monter les partitions précédemment formatées
-choix des mirroirs
+
+#RÉCUPERER CE FICHIER D'INSTALL AVEC GIT
+git clone https://github.com/salanqua/archInstallScript.git
+# lancer chaque commande de ce fichier avec la commande eval $(cat -n fichier | head -j | tail -1)
+# en incrémentant j de la valeur nécessaire à l'exécution de chaque nouvelle commande
+
+# Partitionement du disque
+gdisk /dev/sda
+o # pour écraser toutes les données du disque
+# première partition 512 Mio en fat32 EF00
+# on peut taper les tailles directement en GiB, par exemple 24 GiB avec cgdisk)
+# 2ème root / disons 35 GiB
+# 3ème /home le reste
+
+# formater les partitions précédemment créées (mkfs.vfat -F32 /dev/sda1)
+mkfs.vfat /dev/sda1
+mkfs.ext4 /dev/sda2
+mkfs.ext4 /dev/sda3
+
+# monter les partitions précédemment créées :
+mount /dev/sda2 /mnt
+mkdir -p /mnt/boot/efi
+mount /dev/sda1 /mnt/boot/efi
+mkdir /mnt/home
+mount /dev/sda3 /mnt/home
+
+# selection des 6 mirroirs dispos les + rapides à l'instant t
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
-sed -i 's/#Server/Server/' /etc/pacman.s/mirrorlist.bak (ou bien avec vim)
+sed -i 's/#Server/Server/' /etc/pacman.s/mirrorlist.bak # ou bien avec vim
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
-(ça peut prendre un certain temps)
-pacstrap -i /mnt base base-devel vim git efibootmgr terminus-font 
+
+pacstrap -i /mnt base base-devel vim git efibootmgr grub terminus-font 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
+setfont ter-v32n
 echo "i7-6700k" > /etc/hostname
 echo 'fr_FR.UTF-8 UTF-8' > /etc/locale.gen
 locale-gen
 echo 'LANG=fr_FR.UTF-8' > /etc/locale.conf
 export LANG=fr_FR.UTF-8
-echo 'KEYMAP=fr-pc' > /etc/vconsole.conf
+echo 'KEYMAP=fr' > /etc/vconsole.conf
+echo 'FONT=lat9w-16'
 rm -f /etc/localtime
 ln -s /usr/share/zoneinfo/Europe/Paris /etc/localtime
 hwclock --systohc --utc
 mkinitcpio -p linux
-/*
-éditer pacman.conf et décommenter le dépôt multilib 2 lignes /* pas obligé */
-Siglevel = Never
-Server = repo ...
-*/
 
-pacman -Suy
 passwd
-useradd -m -g users -G wheel,storage,power -s /bin/bash username
+useradd -G users -s /bin/bash -m username
 passwd username
-EDITOR = nano(ou vim) visudo
 
 pacman -S bash-completion
-vérifier le bon montage des var efi :
+# vérifier le bon montage des var efi :
 mount -t efivars efivars /sys/firmware/efi/efivars
-bootcl install
-blkid -s PARTUUID -o value /dev/sda3
 
-éditer le fichier loader.conf dans le répertoire /boot/loader/entries et y mettre :
-default   arch
-timeout   3
-editer le fichier /boot/loader/entries/arch.conf et y mettre :
-title    archlinux
-linux    /vmlinuz-linux
-initrd   /initramfs-linux.img
-option   root=/PARTUUID=....      rw
+grub-mkconfig -o /boot/grub/grub.cfg
+grub-install /dev/sda
 
-ou bien
-efibootmgr -c -l /vmlinuz-linux -u "root=/dev/sda2 initrd=/initramfs-linux.img"  à adapter à ton install
-systemctl enable lxdm dhcpcd
+systemctl enable dhcpcd
 
-rebooter sur la clé, remonter les partitions, pacstraper
-installer le serveur graphique
-pacman -S xorg-server xorg-xinit
-installer nvidia :
+exit
+umount -R /mnt
+reboot # et enlever la clé
+
+# Installer le serveur graphique
+pacman -S xorg-server xorg-xinit 
+# installer le pilote graphique propriétaire nvidia :
 pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings lxdm
+systemctl enable lxdm
 
-Rebooter,  enlever la clé, enjoy.
+# installer xfce4
+pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util thunar thunar-volman xfburn xfce4-artwork xfce4-cpufreq-plugin
+pacman -S xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd xfce4-panel
+pacman -S xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager
+pacman -S xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes
+
+#Install file utilities
+pacman -S p7zip zip unzip unrar scrot gedit evince
+# voir ce que fait fileroller avant le cas échéant de l'installer
+
+# Install multimédia codecs
+pacman -S gstreamer0.10-bad-plugins gstreamer0.10-base-plugins gstreamer0.10-ffmpeg
+pacman -S gstreamer0.10-good-plugins gstreamer0.10-ugly-plugins gst-libav gst-plugins-bad
+pacman -S gst-plugins-base  gst-plugins-good  gst-plugins-ugly ffmpegthumbnailer
+
+# Install audio apps
+pacman -S pulseaudio pulseaudio-alsa alsa-utils
+
+# rebooter en mode graphique cette fois et poursuivre l'install et la config en mode graphique
