@@ -19,16 +19,16 @@ setfont ter-v32n
 
 # RÉCUPERER CE FICHIER D'INSTALL AVEC GIT
 git clone https://github.com/salanqua/archInstallScript.git
-# lancer chaque commande de ce fichier avec la commande eval $(cat -n fichier | head -j | tail -1)
+# lancer chaque commande de ce fichier avec la commande eval $(cat fichier | head -j | tail -1)
 # en incrémentant j de la valeur nécessaire à l'exécution de chaque nouvelle commande
 
 # Partitionement du disque
 gdisk /dev/sda
 o # pour écraser toutes les données du disque
-# première partition 512 Mio en fat32 EF00
-# on peut taper les tailles directement en GiB, par exemple 24 GiB avec cgdisk)
-# 2ème root / disons 35 GiB
-# 3ème /home le reste
+# première partition 512 MiB type EF00
+# on peut taper les tailles directement en GiB, par exemple 24 GiB)
+# 2ème root / disons 35 GiB  type 8300
+# 3ème /home le reste  type 8300
 
 # formater les partitions précédemment créées 
 mkfs.vfat /dev/sda1
@@ -95,7 +95,7 @@ pacman -S xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settin
 pacman -S xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes
 
 #Install file utilities
-pacman -S p7zip zip unzip unrar scrot gedit evince
+pacman -S p7zip zip unzip unrar scrot gedit evince eog
 # voir ce que fait fileroller avant le cas échéant de l'installer
 
 # Install multimédia codecs
@@ -106,4 +106,4 @@ pacman -S gst-plugins-base  gst-plugins-good  gst-plugins-ugly ffmpegthumbnailer
 # Install audio apps
 pacman -S pulseaudio pulseaudio-alsa alsa-utils firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr
 
-# rebooter en mode graphique cette fois et poursuivre l'install et la config en mode graphique
+# rebooter en mode graphique cette fois et poursuivre la config (imprimante, customisation , interface de dev ...).
