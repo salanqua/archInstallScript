@@ -1,4 +1,4 @@
-BIOS CARTE MÈRE Z170 PRO
+BIOS CARTE MÈRE Z170
 boot           uefi
 fast boot      disabled
 secure boot    disabled
@@ -6,7 +6,7 @@ csm            other os
 
 #AU BOOT DE LA CLÉ USB :
 #taper e
-#taper nomodeset avant la commande lançant le noyau
+#taper nomodeset avant la commande lançant le noyau initrd = ...
 #VÉRIFIER LE RÉSEAU AVEC 
 ping -c 3 www.free.fr
 
