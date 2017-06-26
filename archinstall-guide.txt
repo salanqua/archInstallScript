@@ -15,7 +15,7 @@ efivar -l
 
 #install de paquets qui rendent bien service
 pacman -S vim terminus-font git
-setfont ter-v32n
+setfont ter-v32n             # augmente la taille de la police trop petite avec un grand écran
 
 # RÉCUPERER CE FICHIER D'INSTALL AVEC GIT
 git clone https://github.com/salanqua/archInstallScript.git
@@ -26,6 +26,7 @@ git clone https://github.com/salanqua/archInstallScript.git
 gdisk /dev/sda
 o # pour écraser toutes les données du disque
 # première partition 512 MiB type EF00
+# rendre bootable cette première partition
 # on peut taper les tailles directement en GiB, par exemple 24 GiB)
 # 2ème root / disons 35 GiB  type 8300
 # 3ème /home le reste  type 8300
@@ -107,8 +108,27 @@ pacman -S gstreamer0.10-bad-plugins gstreamer0.10-base-plugins gstreamer0.10-ffm
 pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack \
           alsa-utils firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web
 
+# Install de paquets nécessaires pour tracer des courbes et pour qarte
+pacman -S python2-numpy python2-matplotlib qt5-svg
+
 # Imprimante
 pacman -S cups system-config-printer
 systemctl enable org.cups.cupsd.service
 
 # rebooter en mode graphique cette fois et poursuivre la config (customisation , ide ...).
+
+# Install de yaourt (! se fait logé en utilisateur et pas en root)
+cd
+mkdir package-query
+cd package-query
+git clone https://aur.archlinux.org/package-query.git
+makepkg -si
+cd ..
+mkdir yaourt
+cd yaourt
+git clone https://aur.archlinux.org/yaourt.git
+cd ..
+
+yaourt -S google-chrome 
+
+...
