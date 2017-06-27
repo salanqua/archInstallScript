@@ -15,7 +15,7 @@ efivar -l
 
 #install de paquets qui rendent bien service
 pacman -S vim terminus-font git
-setfont ter-v32n             # augmente la taille de la police trop petite avec un grand écran
+setfont ter-v32n               # augmente la taille de la police trop petite avec un grand écran
 
 # RÉCUPERER CE FICHIER D'INSTALL AVEC GIT
 git clone https://github.com/salanqua/archInstallScript.git
@@ -43,7 +43,8 @@ mount /dev/sda1 /mnt/boot/efi
 mkdir /mnt/home
 mount /dev/sda3 /mnt/home
 
-# selection des 6 mirroirs dispos les + rapides à l'instant t
+# sélection des 6 mirroirs dispos les + rapides à l'instant t
+# suivant la connexion disponible ça peut prendre un certain temps
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 sed -i 's/#Server/Server/' /etc/pacman.s/mirrorlist.bak # ou bien avec vim
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
@@ -105,8 +106,10 @@ pacman -S gstreamer0.10-bad-plugins gstreamer0.10-base-plugins gstreamer0.10-ffm
           gst-plugins-base  gst-plugins-good  gst-plugins-ugly ffmpegthumbnailer
 
 # Install audio apps
-pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack \
-          alsa-utils firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web
+pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils 
+
+#Install internet apps
+pacman -S firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web
 
 # Install de paquets nécessaires pour tracer des courbes et pour qarte
 pacman -S python2-numpy python2-matplotlib qt5-svg
@@ -117,7 +120,7 @@ systemctl enable org.cups.cupsd.service
 
 # rebooter en mode graphique cette fois et poursuivre la config (customisation , ide ...).
 
-# Install de yaourt (! se fait logé en utilisateur et pas en root)
+# Install de yaourt (! se fait loggé en utilisateur et pas en root)
 cd
 mkdir package-query
 cd package-query
