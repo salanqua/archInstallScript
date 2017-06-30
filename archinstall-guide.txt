@@ -138,6 +138,7 @@ cd ..
 
 yaourt -S google-chrome 
 
+yaourt -S g810-led.git  # pour les possesseurs d'un g810
 yaourt -S pamac-aur
 yaourt -S downgrade
 pacman -S expac
