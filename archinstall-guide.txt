@@ -1,59 +1,65 @@
-BIOS CARTE MÈRE Z170
-boot           uefi
+BIOS CARTE MERE Z170
+BOOT et install en mode UEFI
+Sélectionner "mode avancé du bios" une fois pour toute, ca evite de cliquer pour
+revenir dans ce mode à chaque fois
+Onglet boot :
 fast boot      disabled
 secure boot    disabled
-csm            other os
+csm            enabled  mode UEFI+LEGACY 
+                        mode legacy pour les autres
+                        mode OTHER OS
 
-#AU BOOT DE LA CLÉ USB :
-#taper e
-#taper nomodeset avant la commande lançant le noyau initrd = ...
-#VÉRIFIER LE RÉSEAU AVEC 
+#AU BOOT DE LA CLE USB :
+#VERIFIER LE RESEAU AVEC 
 ping -c 3 www.free.fr
-
-#vérification des paramètres uefi chargé
+pacman -Syy
+#verification des parametres uefi charge
 efivar -l
 
 #install de paquets qui rendent bien service
-pacman -S vim terminus-font git
-setfont ter-v32n               # augmente la taille de la police trop petite avec un grand écran
+pacman -S vim terminus-font
+setfont ter-v32n               # augmente la taille de la police trop petite avec un grand ecran
 
-# RÉCUPERER CE FICHIER D'INSTALL AVEC GIT
-git clone https://github.com/salanqua/archInstallScript.git
-# lancer chaque commande de ce fichier avec la commande eval $(cat fichier | head -j | tail -1)
-# en incrémentant j de la valeur nécessaire à l'exécution de chaque nouvelle commande
+# RECUPERER CE FICHIER D'INSTALL AVEC WGET
+wget http://stockprso.free.fr/archinstall-guide.txt
+# lancer chaque commande de ce fichier avec la commande
+eval $(awk 'NR==numline' archinstall-guide.txt)
+# en donnant a numline le numero de ligne associe a la commande a executer
 
 # Partitionement du disque
 gdisk /dev/sda
-o # pour écraser toutes les données du disque
-# première partition 512 MiB type EF00
-# rendre bootable cette première partition
+o # pour ecraser toutes les donnees du disque et crééer un partitionnement gpt valide
+# premiere partition 512 MiB type EF00
+# rendre bootable cette premiere partition
 # on peut taper les tailles directement en GiB, par exemple 24 GiB)
-# 2ème root / disons 35 GiB  type 8300
-# 3ème /home le reste  type 8300
+# 2eme root / disons 35 GiB  type 8300 (ext4)
+# 3eme /home le reste  type 8300
 
-# formater les partitions précédemment créées 
+# formater les partitions precedemment creees 
 mkfs.vfat /dev/sda1
 mkfs.ext4 /dev/sda2
 mkfs.ext4 /dev/sda3
 
-# monter les partitions précédemment créées :
+# monter les partitions precedemment creees :
 mount /dev/sda2 /mnt
 mkdir -p /mnt/boot/efi
 mount /dev/sda1 /mnt/boot/efi
 mkdir /mnt/home
 mount /dev/sda3 /mnt/home
 
-# sélection des 6 mirroirs dispos les + rapides à l'instant t
-# suivant la connexion disponible ça peut prendre un certain temps
+# selection des 6 mirroirs dispos les + rapides a l'instant t
+# suivant la connexion disponible ca peut prendre un certain temps
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 sed -i 's/#Server/Server/' /etc/pacman.s/mirrorlist.bak # ou bien avec vim
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
+# Bien souvent une commande de ce type est plus efficace/rapide et les downloads sont plus rapides
+echo "Server = http://mir.archlinux.fr/$repo/os/$arch" >> /etc/pacman.d/mirrorlist
 
-pacstrap -i /mnt base base-devel vim git efibootmgr grub terminus-font bash-completion
+pacstrap -i /mnt base base-devel vim git efibootmgr grub terminus-font bash-completion intel-ucode memtest86+ wget 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
 setfont ter-v32n
-echo "nom_d_hôte" > /etc/hostname
+echo "i7-6700k" > /etc/hostname
 echo 'fr_FR.UTF-8 UTF-8' > /etc/locale.gen
 locale-gen
 echo 'LANG=fr_FR.UTF-8' > /etc/locale.conf
@@ -66,14 +72,20 @@ export LANG=fr_FR.UTF-8
 mkinitcpio -p linux
 # set root pass
 passwd
-# add user
-useradd -G users -s /bin/bash -m username
-# set user pass
-passwd username
+# add user ax
+useradd -G users -s /bin/bash -m ax
+# set ax pass
+passwd ax
 
-# vérifier le bon montage des var efi :
+# RECUPERER LES FICHIERS DE CONF SUIVANTS
+dir=etc
+for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers	_etc_X11_xorg.conf;do wget http://stockprso.free.fr/$dir/$i;done
+# ET LES COPIER A LEUR EMPLACEMENT FINAL
+
+# verifier le bon montage des var efi :
 mount -t efivars efivars /sys/firmware/efi/efivars
 
+# creation de grub.cfg et installation de grub dans la partition EFI
 grub-mkconfig -o /boot/grub/grub.cfg
 grub-install /dev/sda
 
@@ -81,38 +93,30 @@ systemctl enable dhcpcd
 
 exit
 umount -R /mnt
-reboot # et enlever la clé
+reboot # et enlever la cle
 
 # Installer le serveur graphique
-pacman -S xorg-server xorg-xinit 
-# installer le pilote graphique propriétaire nvidia :
-pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings lxdm
+pacman -S xorg-server lxdm xorg-xinit xorg-xrandr 
+# installer le pilote graphique proprietaire nvidia :
+pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings 
 systemctl enable lxdm
 
-# installer xfce4
-pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util thunar thunar-volman xfburn \ 
-          xfce4-artwork xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin \
-          xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd xfce4-panel xfce4-pulseaudio-plugin \
-          xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager \
-          xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 \
-          xfwm4-themes xfce4-pulseaudio-plugin
+# Installer xfce4
+pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util thunar thunar-volman xfburn xfce4-artwork xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd xfce4-panel xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes xfce4-pulseaudio-plugin
 
-#Install file utilities
-pacman -S p7zip zip unzip unrar scrot gedit evince eog fileroller
+# Instal file utilities and multimedia codecs
+pacman -S p7zip zip unzip unrar scrot gedit evince eog gst-plugins-base  gst-plugins-good  gst-plugins-ugly ffmpegthumbnailer
 
-# Install multimédia codecs
-pacman -S gstreamer0.10-bad-plugins gstreamer0.10-base-plugins gstreamer0.10-ffmpeg \
-          gstreamer0.10-good-plugins gstreamer0.10-ugly-plugins gst-libav gst-plugins-bad \
-          gst-plugins-base  gst-plugins-good  gst-plugins-ugly ffmpegthumbnailer
+# Install audio and internet apps
+pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web
 
-# Install audio apps
-pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils 
-
-#Install internet apps
-pacman -S firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web
-
-# Install de paquets nécessaires pour tracer des courbes et pour qarte
+# Install de paquets necessaires pour tracer des courbes et pour qarte
 pacman -S python2-numpy python2-matplotlib qt5-svg
+
+# Install d'apps diverses et variees
+pacman -S hwinfo os-prober mplayer smplayer iscan perl-tk tk gparted chromium gimp handbrake fbreader xsensors lftp gdb gvfs ntfs-3g rsync screen ttf-bitstream-vera ttf-freefont ttf-liberation wget beep busybox cronie flashplugin font-bitstream-speedo fuse openssh openvpn smartmontools truecrypt file-roller hdparm xfce4-notifyd
+
+systemctl enable ntpd.service
 
 # Imprimante
 pacman -S cups system-config-printer
@@ -120,7 +124,7 @@ systemctl enable org.cups.cupsd.service
 
 # rebooter en mode graphique cette fois et poursuivre la config (customisation , ide ...).
 
-# Install de yaourt (! se fait loggé en utilisateur et pas en root)
+# Install de yaourt (! il faut etre logge en utilisateur et pas en root)
 cd
 mkdir package-query
 cd package-query
@@ -134,4 +138,9 @@ cd ..
 
 yaourt -S google-chrome 
 
+yaourt -S pamac-aur
+yaourt -S downgrade
+pacman -S expac
+
+# Voir ensuite avec libreoffice (fresh ou still)
 ...
