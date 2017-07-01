@@ -1,10 +1,10 @@
 BIOS CARTE MERE Z170
 BOOT et install en mode UEFI
 Sélectionner "mode avancé du bios" une fois pour toute, ca evite de cliquer pour
-revenir dans ce mode à chaque fois
+revenir dans ce mode à chaque fois a partir du mode eazy
 Onglet boot :
 fast boot      disabled
-secure boot    disabled
+secure boot    disabled *** CAPITAL pour pouvoir booter sur le media en mode UEFI ***
 csm            enabled  mode UEFI+LEGACY 
                         mode legacy pour les autres
                         mode OTHER OS
@@ -18,13 +18,15 @@ efivar -l
 
 #install de paquets qui rendent bien service
 pacman -S vim terminus-font
-setfont ter-v32n               # augmente la taille de la police trop petite avec un grand ecran
+setfont ter-v32n            # augmente la taille de la police trop petite avec un grand ecran
 
 # RECUPERER CE FICHIER D'INSTALL AVEC WGET
 wget http://stockprso.free.fr/archinstall-guide.txt
 # lancer chaque commande de ce fichier avec la commande
 eval $(awk 'NR==numline' archinstall-guide.txt)
 # en donnant a numline le numero de ligne associe a la commande a executer
+# en s'aidant de la commande 
+cat -n archinstall-guide.txt | more
 
 # Partitionement du disque
 gdisk /dev/sda
@@ -83,12 +85,13 @@ for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorli
 # ET LES COPIER A LEUR EMPLACEMENT FINAL
 
 # verifier le bon montage des var efi :
-mount -t efivars efivars /sys/firmware/efi/efivars
+ls -l /sys/firmware/efi/efivars
 
 # creation de grub.cfg et installation de grub dans la partition EFI
 grub-mkconfig -o /boot/grub/grub.cfg
 grub-install /dev/sda
 
+# activer le réseau ethernet pour le prochain reboot
 systemctl enable dhcpcd
 
 exit
@@ -99,6 +102,7 @@ reboot # et enlever la cle
 pacman -S xorg-server lxdm xorg-xinit xorg-xrandr 
 # installer le pilote graphique proprietaire nvidia :
 pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings 
+# activer l ecran de login lxdm
 systemctl enable lxdm
 
 # Installer xfce4
@@ -116,6 +120,7 @@ pacman -S python2-numpy python2-matplotlib qt5-svg
 # Install d'apps diverses et variees
 pacman -S hwinfo os-prober mplayer smplayer iscan perl-tk tk gparted chromium gimp handbrake fbreader xsensors lftp gdb gvfs ntfs-3g rsync screen ttf-bitstream-vera ttf-freefont ttf-liberation wget beep busybox cronie flashplugin font-bitstream-speedo fuse openssh openvpn smartmontools truecrypt file-roller hdparm xfce4-notifyd
 
+# activer la synchronisation avec les serveurs de temps de l internet
 systemctl enable ntpd.service
 
 # Imprimante
@@ -144,4 +149,5 @@ yaourt -S downgrade
 pacman -S expac
 
 # Voir ensuite avec libreoffice (fresh ou still)
+
 ...
