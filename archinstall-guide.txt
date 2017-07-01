@@ -75,7 +75,7 @@ mkinitcpio -p linux
 # set root pass
 passwd
 # add user ax
-useradd -G users -s /bin/bash -m ax
+useradd -g users -s /bin/bash -m ax
 # set ax pass
 passwd ax
 
@@ -99,7 +99,7 @@ umount -R /mnt
 reboot # et enlever la cle
 
 # Installer le serveur graphique
-pacman -S xorg-server lxdm xorg-xinit xorg-xrandr 
+pacman -S xorg-server lxdm xorg-xinit xorg-xrandr xorg-fonts-100dpi xorg-fonts-75dpi
 # installer le pilote graphique proprietaire nvidia :
 pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings 
 # activer l ecran de login lxdm
@@ -150,4 +150,9 @@ pacman -S expac
 
 # Voir ensuite avec libreoffice (fresh ou still)
 
+# verifs hardware
+yaourt -S i-nex-git  # spectaculaire et complet
+yaourt -S systester  # bench decimales de pi jusqu'à 128M
+yaourt -S hardinfo   # infos et bench
+yaourt -S glxgears  
 ...
