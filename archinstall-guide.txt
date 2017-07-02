@@ -1,7 +1,7 @@
 BIOS CARTE MERE Z170
 BOOT et install en mode UEFI
 Sélectionner "mode avancé du bios" une fois pour toute, ca evite de cliquer pour
-revenir dans ce mode à chaque fois a partir du mode eazy
+revenir dans ce mode à chaque fois a partir du mode easy (ez)
 Onglet boot :
 fast boot      disabled
 secure boot    disabled *** CAPITAL pour pouvoir booter sur le media en mode UEFI ***
@@ -57,7 +57,7 @@ rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
 # Bien souvent une commande de ce type est plus efficace/rapide et les downloads sont plus rapides
 echo "Server = http://mir.archlinux.fr/$repo/os/$arch" >> /etc/pacman.d/mirrorlist
 
-pacstrap -i /mnt base base-devel vim git efibootmgr grub terminus-font bash-completion intel-ucode memtest86+ wget 
+pacstrap -i /mnt base base-devel vim git efibootmgr grub terminus-font bash-completion intel-ucode wget 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 arch-chroot /mnt
 setfont ter-v32n
@@ -79,9 +79,12 @@ useradd -g users -s /bin/bash -m ax
 # set ax pass
 passwd ax
 
+# Note : memtest86+ ne semble pas fonctionner en mode uefi ...
+# tester la ram avec un live usb/cd ...
+
 # RECUPERER LES FICHIERS DE CONF SUIVANTS
 dir=etc
-for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers	_etc_X11_xorg.conf;do wget http://stockprso.free.fr/$dir/$i;done
+for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers;do wget http://stockprso.free.fr/$dir/$i;done
 # ET LES COPIER A LEUR EMPLACEMENT FINAL
 
 # verifier le bon montage des var efi :
@@ -99,8 +102,8 @@ umount -R /mnt
 reboot # et enlever la cle
 
 # Installer le serveur graphique
-pacman -S xorg-server lxdm xorg-xinit xorg-xrandr xorg-fonts-100dpi xorg-fonts-75dpi
-# installer le pilote graphique proprietaire nvidia :
+pacman -S xorg-server xorg-xinit xorg-xrandr xorg-fonts-100dpi xorg-fonts-75dpi lxdm
+# installer le pilote graphique proprietaire nvidia et ses utilitaires :
 pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings 
 # activer l ecran de login lxdm
 systemctl enable lxdm
@@ -108,23 +111,24 @@ systemctl enable lxdm
 # Installer xfce4
 pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util thunar thunar-volman xfburn xfce4-artwork xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd xfce4-panel xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes xfce4-pulseaudio-plugin
 
-# Instal file utilities and multimedia codecs
+# Installer des utilitaires et des codecs multimedia
 pacman -S p7zip zip unzip unrar scrot gedit evince eog gst-plugins-base  gst-plugins-good  gst-plugins-ugly ffmpegthumbnailer
 
-# Install audio and internet apps
+# Installer l audio  et les apps internet
 pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web
 
-# Install de paquets necessaires pour tracer des courbes et pour qarte
+# Installer les paquets necessaires pour tracer des courbes et pour qarte
 pacman -S python2-numpy python2-matplotlib qt5-svg
 
-# Install d'apps diverses et variees
-pacman -S hwinfo os-prober mplayer smplayer iscan perl-tk tk gparted chromium gimp handbrake fbreader xsensors lftp gdb gvfs ntfs-3g rsync screen ttf-bitstream-vera ttf-freefont ttf-liberation wget beep busybox cronie flashplugin font-bitstream-speedo fuse openssh openvpn smartmontools truecrypt file-roller hdparm xfce4-notifyd
+# Install d apps diverses et variees
+pacman -S hwinfo os-prober mplayer smplayer iscan perl-tk tk gparted chromium gimp handbrake fbreader xsensors lftp gdb gvfs ntfs-3g rsync screen ttf-bitstream-vera ttf-freefont ttf-liberation wget beep busybox cronie flashplugin font-bitstream-speedo fuse openssh openvpn smartmontools hdparm truecrypt file-roller hdparm xfce4-notifyd
 
 # activer la synchronisation avec les serveurs de temps de l internet
 systemctl enable ntpd.service
 
 # Imprimante
 pacman -S cups system-config-printer
+# activer le service d'impression
 systemctl enable org.cups.cupsd.service
 
 # rebooter en mode graphique cette fois et poursuivre la config (customisation , ide ...).
@@ -150,7 +154,7 @@ pacman -S expac
 
 # Voir ensuite avec libreoffice (fresh ou still)
 
-# verifs hardware
+# verifs et benchs hardware
 yaourt -S i-nex-git  # spectaculaire et complet
 yaourt -S systester  # bench decimales de pi jusqu'à 128M
 yaourt -S hardinfo   # infos et bench
