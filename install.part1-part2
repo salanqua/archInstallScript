@@ -1,0 +1,209 @@
+BIOS CARTE MÈRE Z170
+Install en mode UEFI
+Sélectionner "mode avancé du bios" (onglet boot du mode avancé) une fois pour toute, ca évite de cliquer pour
+revenir dans ce mode à chaque fois à partir du mode easy (ez) (ou de taper F7)
+Onglet boot :
+fast boot     disabled
+secure boot   disabled *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
+csm           MAJ disabled et surtout pas enabled  *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
+              mode OTHER OS
+
+# APRÈS LE BOOT DE LA CLÉ USB EN MODE UEFI 
+loadkeys fr-pc                  # par défaut la locale est en qwerty, la passer en azerty
+# VÉRIFIER LE RÉSEAU AVEC 
+ping -c 3 www.free.fr
+pacman -Syy
+# vérification des paramètres uefi chargé
+efivar -l
+
+#install d'un paquet qui rend bien service
+pacman -S terminus-font
+setfont ter-v32n       # augmente la taille de la police trop petite avec un grand écran
+
+# RÉCUPÉRER LES 2 FICHIERS D'INSTALL AVEC WGET
+wget http://stockprso.free.fr/archinstall.part1.txt
+wget http://stockprso.free.fr/archinstall.part2.txt
+# lancer chaque commande de ce fichier avec la commande
+eval $(awk 'NR==numline' archinstall-part?.txt) # ? = 1 ou 2
+# en donnant à numline le numéro de ligne associé à la commande à exécuter
+# en s'aidant de la commande 
+cat -n archinstall-part1.txt | more
+# lancé depuis une seconde console et en switchant de l'une à l'autre
+
+# Partitionement *** gpt *** du disque
+gdisk /dev/sda
+o # pour écraser toutes les données du disque et créer une table de partitions gpt valide
+# première partition 512 MiB type EF00
+# rendre bootable cette premiere partition
+# on peut taper les tailles directement en GiB, par exemple +24G
+# 2ème root / disons 35 GiB type 8300 (ext4)
+# 3ème /home le reste type 8300
+
+# Pour être plus précis, on peut donner la table de partitions typique d'un disque existant
+# Il suffira de recopier les valeurs.
+# Périphérique    Début        Fin  Secteurs Taille  Type
+# /dev/sda1        2048    1050623   1048576   512M  Système EFI
+# /dev/sda2     1050624   74450943  73400320    35G  Système de fichiers Linux
+# /dev/sda3    74450944 1000215182 925764239 441,4G  Système de fichiers Linux
+
+# Ou encore de celle-là :
+# Périphérique    Début        Fin  Secteurs Taille  Type
+# /dev/sda1        2048     616447    614400   300M  Système EFI
+# /dev/sda2      616448   84502527  83886080    40G  Système de fichiers Linux
+# /dev/sda3    84502528  100021518   fin du disque   Système de fichiers Linux
+
+# formater les partitions précédemment créées 
+mkfs.vfat /dev/sda1
+mkfs.ext4 /dev/sda2
+mkfs.ext4 /dev/sda3
+
+# monter les partitions précédemment créées :
+mount /dev/sda2 /mnt
+mkdir -p /mnt/boot/efi
+mount /dev/sda1 /mnt/boot/efi
+mkdir /mnt/home
+mount /dev/sda3 /mnt/home
+
+# sélection des 6 mirroirs dispos les + rapides à l'instant t
+# suivant la connexion disponible ça peut prendre un certain temps
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+sed -i 's/#Server/Server/' /etc/pacman.d/mirrorlist.bak # ou bien avec vim
+rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
+# Bien souvent une commande de ce type est plus efficace/rapide et les downloads sont plus rapides
+echo 'Server = http://mir.archlinux.fr/$repo/os/$arch' > /etc/pacman.d/mirrorlist
+# Remarque il faut nécessairement des apostrophes ici plutôt que des guillemets ou alors échapper les $.
+
+pacstrap -i /mnt base base-devel grub terminus-font bash-completion intel-ucode wget 
+genfstab -U -p /mnt >> /mnt/etc/fstab
+# Pour continuer d'exécuter les commandes awk et cat -n dans le chroot :
+cp archinstall.part?.txt /mnt
+arch-chroot /mnt
+setfont ter-v32n
+echo - n 'Nom hôte ?  '
+read hstname
+echo "$hstname" > /etc/hostname
+echo 'fr_FR.UTF-8 UTF-8' > /etc/locale.gen
+locale-gen
+echo 'LANG=fr_FR.UTF-8' > /etc/locale.conf
+echo 'KEYMAP=fr' > /etc/vconsole.conf
+echo 'FONT=lat9w-16' >> /etc/vconsole.conf
+rm -f /etc/localtime
+ln -s /usr/share/zoneinfo/Europe/Paris /etc/localtime
+hwclock --systohc --utc
+export LANG=fr_FR.UTF-8
+mkinitcpio -p linux
+# set root pass
+passwd
+# ajouter un utilisateur, choisir son login
+echo -n 'Nom d utilisateur ?   '
+read user
+useradd -g users -s /bin/bash -m $user
+# set user pass
+passwd $user
+
+# Note : memtest86+ ne semble pas fonctionner en mode uefi ...
+# Tester la ram avec memtest depuis un live usb/cd au boot ...
+
+# RÉCUPÉRER LES FICHIERS DE CONF SUIVANTS
+dir=etc; for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers; do wget http://stockprso.free.fr/$dir/$i; done
+# ET LES COPIER À LEUR EMPLACEMENT FINAL  MAJ pour grub, fstab, lxdm et sudoers, il y a des modifs a faire (nom de login, uids des partitions, path
+de l'image de fond de grub ...).
+
+# vérifier le bon montage des var efi :
+ls -l /sys/firmware/efi/efivars
+
+# installation de grub en mode efi (dans le dossier /boot/efi en fait)
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub --boot-directory=/boot/efi --recheck
+#création du fichier grub.cfg
+grub-mkconfig -o /boot/efi/grub/grub.cfg
+
+# activer le réseau ethernet pour le prochain reboot
+systemctl enable dhcpcd
+
+exit
+# Démontage récursif des partitions montées en une seule commande
+umount -R /mnt
+reboot # et enlever la clé
+
+# À ce stade le plus dur est fait, le reste est long, fastidieux et nécessaire mais plus simple, ce n'est que de l'install.
+
+
+Partie 2 : # pacman -S paquet
+
+# Installer le serveur graphique
+pacman -S lxdm xorg-xrandr xorg-fonts-100dpi xorg-fonts-75dpi xterm 
+# installer le pilote graphique propriétaire nvidia et ses utilitaires :  (pour les possesseurs de cartes graphiques nvidia évidemment)
+pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings
+
+# Installer xfce4
+pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util pacman thunar thunar-volman xfburn xfce4-artwork xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd xfce4-panel xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes
+
+# Installer des utilitaires et des codecs multimédia
+pacman -S p7zip zip unzip unrar scrot gedit evince eog ghex
+pacman -S gst-plugins-base gst-plugins-good gst-plugins-ugly tumbler
+
+# Installer l'audio et les apps internet
+pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils
+pacman -S firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web opera chromium jre8-openjdk curl lftp flashplugin rsync screen tmux easy-rsa nmap simplescreenrecorder libdvdcss lsof par2cmdline ruby  yasm
+
+# Installer les paquets nécessaires pour tracer des courbes, pour qarte, pour le monitoring du cpu
+# et les entêtes du noyau pour compiler des drivers de matériels exotiques / récents
+pacman -S python2-numpy python2-matplotlib gnuplot     # Enlever le cas-écheant le 2 pour la version 3 de python
+pacman -S qt5-svg
+pacman -S cpupower linux-headers arch-install-scripts 
+# arch-install-scripts c'est pour arch-chroot (entre-autre)
+
+# Install d'apps diverses et variées
+pacman -S os-prober mplayer smplayer vlc iscan iscan-data perl-tk tk gparted gimp gimp-help-fr pinta inkscape blender handbrake fbreader gdb gvfs ntfs-3g ntp ttf-bitstream-vera xscreensaver 
+ttf-freefont ttf-liberation beep busybox cronie dosfstools font-bitstream-speedo fuse openssh openvpn truecrypt file-roller pkgfile net-tools mtr wireshark-gtk
+# traceroute netstat ne s'installent pas avec pacman
+# Imprimante
+pacman -S cups system-config-printer
+
+# activation des services méritants de l'être
+# activer la synchronisation avec les serveurs de temps d'archlinux sur internet
+systemctl enable ntpd
+# activer l ecran de login lxdm
+systemctl enable lxdm
+# activer la gestion de la fréquence processeur 
+systemctl enable cpupower                       # cpufreqd nope 
+# activer le service d'impression
+systemctl enable org.cups.cupsd
+
+# rebooter en mode graphique cette fois et poursuivre la config (customisation , ide ...).
+
+# Install de yaourt (il faut être loggé en utilisateur et pas en root)
+cd
+git clone https://aur.archlinux.org/package-query.git
+cd package-query
+makepkg -si
+cd ..
+git clone https://aur.archlinux.org/yaourt.git
+cd yaourt 
+makepkg -si
+cd ..
+
+yaourt -S google-chrome 
+
+yaourt -S g810-led.git  # pour les possesseurs d'un g810 orion de Logitech 
+yaourt -S pamac-aur
+yaourt -S downgrade
+pacman -S expac
+
+# Voir ensuite avec libreoffice (fresh ou still)
+
+# monitoring et benchs hardware
+pacman -S lm_sensors i2c-tools xsensors hdparm hddtemp smartmontools
+yaourt -S i-nex-git  # spectaculaire et complet
+yaourt -S systester  # bench décimales de pi jusqu'à 128M
+yaourt -S hwinfo hardinfo   # infos et bench
+yaourt -S glxgears
+
+# transfert des fichiers du smartphone vers l'ordi (ou l'inverse)
+yaourt -S simple-mtpfs  
+
+cat 'Y' > affirmatif
+l="4 6 9 12 13 16 17 21 22 23 27 31 35 37 39 41"
+for i in $l;do eval $(awk "NR==$i" archinstall-part2.txt) < affirmatif;done
+
+
