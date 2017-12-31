@@ -105,9 +105,10 @@ passwd $user
 # Tester la ram avec memtest depuis un live usb/cd au boot ...
 
 # RÉCUPÉRER LES FICHIERS DE CONF SUIVANTS
-dir=etc; for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers; do wget http://stockprso.free.fr/$dir/$i; done
-# ET LES COPIER À LEUR EMPLACEMENT FINAL  MAJ pour grub, fstab, lxdm et sudoers, il y a des modifs a faire (nom de login, uids des partitions, path
-de l'image de fond de grub ...).
+dir=etc; for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers;
+do wget http://stockprso.free.fr/$dir/$i; done
+# ET LES COPIER À LEUR EMPLACEMENT FINAL  MAJ pour grub, fstab, lxdm et sudoers, il y a des modifs a faire 
+# (nom de login, uids des partitions, path de l'image de fond de grub ...).
 
 # vérifier le bon montage des var efi :
 ls -l /sys/firmware/efi/efivars
@@ -132,11 +133,15 @@ Partie 2 : # pacman -S paquet
 
 # Installer le serveur graphique
 pacman -S lxdm xorg-xrandr xorg-fonts-100dpi xorg-fonts-75dpi xterm 
-# installer le pilote graphique propriétaire nvidia et ses utilitaires :  (pour les possesseurs de cartes graphiques nvidia évidemment)
+# installer le pilote graphique propriétaire nvidia et ses utilitaires :  (pour les possesseurs de cartes graphiques 
+# nvidia évidemment)
 pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings
 
 # Installer xfce4
-pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util pacman thunar thunar-volman xfburn xfce4-artwork xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd xfce4-panel xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes
+pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util pacman thunar thunar-volman xfburn xfce4-artwork
+xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd 
+xfce4-panel xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager
+xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes
 
 # Installer des utilitaires et des codecs multimédia
 pacman -S p7zip zip unzip unrar scrot gedit evince eog ghex
@@ -144,7 +149,8 @@ pacman -S gst-plugins-base gst-plugins-good gst-plugins-ugly tumbler
 
 # Installer l'audio et les apps internet
 pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils
-pacman -S firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web opera chromium jre8-openjdk curl lftp flashplugin rsync screen tmux easy-rsa nmap simplescreenrecorder libdvdcss lsof par2cmdline ruby  yasm
+pacman -S firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web opera chromium jre8-openjdk curl lftp flashplugin
+rsync screen tmux easy-rsa nmap simplescreenrecorder libdvdcss lsof par2cmdline ruby  yasm
 
 # Installer les paquets nécessaires pour tracer des courbes, pour qarte, pour le monitoring du cpu
 # et les entêtes du noyau pour compiler des drivers de matériels exotiques / récents
@@ -154,8 +160,9 @@ pacman -S cpupower linux-headers arch-install-scripts
 # arch-install-scripts c'est pour arch-chroot (entre-autre)
 
 # Install d'apps diverses et variées
-pacman -S os-prober mplayer smplayer vlc iscan iscan-data perl-tk tk gparted gimp gimp-help-fr pinta inkscape blender handbrake fbreader gdb gvfs ntfs-3g ntp ttf-bitstream-vera xscreensaver 
-ttf-freefont ttf-liberation beep busybox cronie dosfstools font-bitstream-speedo fuse openssh openvpn truecrypt file-roller pkgfile net-tools mtr wireshark-gtk
+pacman -S os-prober mplayer smplayer vlc iscan iscan-data perl-tk tk gparted gimp gimp-help-fr pinta inkscape blender handbrake 
+fbreader gdb gvfs ntfs-3g ntp ttf-bitstream-vera xscreensaver ttf-freefont ttf-liberation beep busybox cronie dosfstools 
+font-bitstream-speedo fuse openssh openvpn truecrypt file-roller pkgfile net-tools mtr wireshark-gtk
 # traceroute netstat ne s'installent pas avec pacman
 # Imprimante
 pacman -S cups system-config-printer
@@ -204,6 +211,6 @@ yaourt -S simple-mtpfs
 
 cat 'Y' > affirmatif
 l="4 6 9 12 13 16 17 21 22 23 27 31 35 37 39 41"
+# ici les numéros de lignes ci-dessus correspondent avec ceux du fichier archinstall.part2.txt, pas avec ceux de
+ce fichier, attention
 for i in $l;do eval $(awk "NR==$i" archinstall-part2.txt) < affirmatif;done
-
-
