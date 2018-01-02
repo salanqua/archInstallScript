@@ -1,11 +1,11 @@
 BIOS CARTE MÈRE Z170
-Install en mode UEFI
+Install en mode UEFI (Cette méthode reste probablement valable pour tous les bios uefi ...)
 Sélectionner "mode avancé du bios" (onglet boot du mode avancé) une fois pour toute, ca évite de cliquer pour
-revenir dans ce mode à chaque fois à partir du mode easy (ez) (ou de taper F7)
+revenir dans ce mode à chaque fois à partir du mode easy (ez) ou de taper F7)
 Onglet boot :
 fast boot     disabled
 secure boot   disabled *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
-csm           MAJ disabled et surtout pas enabled  *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
+csm           disabled *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
               mode OTHER OS
 
 # APRÈS LE BOOT DE LA CLÉ USB EN MODE UEFI 
@@ -113,7 +113,8 @@ do wget http://stockprso.free.fr/$dir/$i; done
 # vérifier le bon montage des var efi :
 ls -l /sys/firmware/efi/efivars
 
-# installation de grub en mode efi (dans le dossier /boot/efi en fait)
+# installation de grub en mode efi (dans le dossier /boot/efi qui est le point de montage de la partition de boot. Dans
+cette installation, le dossier /boot fait partie intégrante de la partition racine /)
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub --boot-directory=/boot/efi --recheck
 #création du fichier grub.cfg
 grub-mkconfig -o /boot/efi/grub/grub.cfg
