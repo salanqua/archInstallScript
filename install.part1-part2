@@ -1,7 +1,7 @@
 BIOS CARTE MÈRE Z170
 Install en mode UEFI (Cette méthode reste probablement valable pour tous les bios uefi ...)
 Sélectionner "mode avancé du bios" (onglet boot du mode avancé) une fois pour toute, ca évite de cliquer pour
-revenir dans ce mode à chaque fois à partir du mode easy (ez) ou de taper F7)
+revenir dans ce mode à chaque fois à partir du mode easy (ez) ou de taper F7.
 Onglet boot :
 fast boot     disabled
 secure boot   disabled *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
@@ -66,7 +66,7 @@ mount /dev/sda3 /mnt/home
 
 # sélection des 6 mirroirs dispos les + rapides à l'instant t
 # suivant la connexion disponible ça peut prendre un certain temps
-cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.save
 sed -i 's/#Server/Server/' /etc/pacman.d/mirrorlist.bak # ou bien avec vim
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
 # Bien souvent une commande de ce type est plus efficace/rapide et les downloads sont plus rapides
