@@ -79,7 +79,7 @@ genfstab -U -p /mnt >> /mnt/etc/fstab
 cp archinstall.part?.txt /mnt
 arch-chroot /mnt
 setfont ter-v32n
-echo - n 'Nom hôte ?  '
+echo -n 'Nom hôte ?  '
 read hstname
 echo "$hstname" > /etc/hostname
 echo 'fr_FR.UTF-8 UTF-8' > /etc/locale.gen
