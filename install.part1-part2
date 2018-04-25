@@ -1,11 +1,12 @@
-BIOS CARTE MÈRE Z170
-Install en mode UEFI (Cette méthode reste probablement valable pour tous les bios uefi ...)
+BIOS CARTE MÈRE Z170 (valable aussi pour Z270 MAJ avril 2018)
+
+Install en mode UEFI
 Sélectionner "mode avancé du bios" (onglet boot du mode avancé) une fois pour toute, ca évite de cliquer pour
-revenir dans ce mode à chaque fois à partir du mode easy (ez) ou de taper F7.
+revenir dans ce mode à chaque fois à partir du mode easy (ez) (ou de taper F7)
 Onglet boot :
 fast boot     disabled
 secure boot   disabled *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
-csm           disabled *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
+csm           MAJ disabled et surtout pas enabled  *** CAPITAL pour pouvoir booter sur le média en mode UEFI ***
               mode OTHER OS
 
 # APRÈS LE BOOT DE LA CLÉ USB EN MODE UEFI 
@@ -21,14 +22,14 @@ pacman -S terminus-font
 setfont ter-v32n       # augmente la taille de la police trop petite avec un grand écran
 
 # RÉCUPÉRER LES 2 FICHIERS D'INSTALL AVEC WGET
-wget http://stockprso.free.fr/archinstall.part1.txt
-wget http://stockprso.free.fr/archinstall.part2.txt
+wget http://stockprso.free.fr/archinstall.part1
+wget http://stockprso.free.fr/archinstall.part2
 # lancer chaque commande de ce fichier avec la commande
-eval $(awk 'NR==numline' archinstall-part?.txt) # ? = 1 ou 2
+eval $(awk 'NR==numline' archinstall.part?) # ? = 1 ou 2
 # en donnant à numline le numéro de ligne associé à la commande à exécuter
 # en s'aidant de la commande 
-cat -n archinstall-part1.txt | more
-# lancé depuis une seconde console et en switchant de l'une à l'autre
+cat -n archinstall.part1 | more
+# lancé depuis une seconde console et en switchant de l'une à l'autre avec alt + tab
 
 # Partitionement *** gpt *** du disque
 gdisk /dev/sda
@@ -36,6 +37,8 @@ o # pour écraser toutes les données du disque et créer une table de partition
 # première partition 512 MiB type EF00
 # rendre bootable cette premiere partition
 # on peut taper les tailles directement en GiB, par exemple +24G
+# MAJ avril 2018 : pour avoir testé, il reste préférable d'utiliser la méthode de calcul des secteurs,
+# pas de risque d'octets zombis entre 2 partitions
 # 2ème root / disons 35 GiB type 8300 (ext4)
 # 3ème /home le reste type 8300
 
@@ -66,22 +69,20 @@ mount /dev/sda3 /mnt/home
 
 # sélection des 6 mirroirs dispos les + rapides à l'instant t
 # suivant la connexion disponible ça peut prendre un certain temps
-cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.save
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
 sed -i 's/#Server/Server/' /etc/pacman.d/mirrorlist.bak # ou bien avec vim
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.bak > /etc/pacman.d/mirrorlist
 # Bien souvent une commande de ce type est plus efficace/rapide et les downloads sont plus rapides
 echo 'Server = http://mir.archlinux.fr/$repo/os/$arch' > /etc/pacman.d/mirrorlist
 # Remarque il faut nécessairement des apostrophes ici plutôt que des guillemets ou alors échapper les $.
 
-pacstrap -i /mnt base base-devel grub terminus-font bash-completion intel-ucode wget 
+pacstrap -i /mnt base base-devel grub efibootmanager vim terminus-font bash-completion intel-ucode wget 
 genfstab -U -p /mnt >> /mnt/etc/fstab
 # Pour continuer d'exécuter les commandes awk et cat -n dans le chroot :
-cp archinstall.part?.txt /mnt
+cp archinstall.part? /mnt
 arch-chroot /mnt
 setfont ter-v32n
-echo -n 'Nom hôte ?  '
-read hstname
-echo "$hstname" > /etc/hostname
+echo "Nom d hôte : "; read hstname; echo "$hstname" > /etc/hostname
 echo 'fr_FR.UTF-8 UTF-8' > /etc/locale.gen
 locale-gen
 echo 'LANG=fr_FR.UTF-8' > /etc/locale.conf
@@ -95,9 +96,7 @@ mkinitcpio -p linux
 # set root pass
 passwd
 # ajouter un utilisateur, choisir son login
-echo -n 'Nom d utilisateur ?   '
-read user
-useradd -g users -s /bin/bash -m $user
+echo "Nom d utilisateur : "; read user; useradd -g users -s /bin/bash -m $user
 # set user pass
 passwd $user
 
@@ -105,16 +104,17 @@ passwd $user
 # Tester la ram avec memtest depuis un live usb/cd au boot ...
 
 # RÉCUPÉRER LES FICHIERS DE CONF SUIVANTS
-dir=etc; for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers;
-do wget http://stockprso.free.fr/$dir/$i; done
-# ET LES COPIER À LEUR EMPLACEMENT FINAL  MAJ pour grub, fstab, lxdm et sudoers, il y a des modifs a faire 
-# (nom de login, uids des partitions, path de l'image de fond de grub ...).
+dir=etc; for i in _etc_default_grub _etc_fstab _etc_lxdm_lxdm.conf _etc_pacman.d_mirrorlist _etc_sudoers; do wget http://stockprso.free.fr/$dir/$i; done
+# ET LES COPIER À LEUR EMPLACEMENT FINAL  MAJ pour grub, fstab, lxdm et sudoers, il y a des modifs a faire (nom de login, uids des partitions, path
+de l'image de fond de grub ...).
 
 # vérifier le bon montage des var efi :
 ls -l /sys/firmware/efi/efivars
 
-# installation de grub en mode efi (dans le dossier /boot/efi qui est le point de montage de la partition de boot. Dans
-cette installation, le dossier /boot fait partie intégrante de la partition racine /)
+# lors de la dernière clean install (06/04/2018) la commande suivante m'a jeté en disant qu'efibootmgr était manquant ...
+# donc il faut l'installer (maj ajouté à la commande pacstrap avec vim aussi ...)
+
+# installation de grub en mode efi (dans le dossier /boot/efi en fait)
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=grub --boot-directory=/boot/efi --recheck
 #création du fichier grub.cfg
 grub-mkconfig -o /boot/efi/grub/grub.cfg
@@ -130,43 +130,49 @@ reboot # et enlever la clé
 # À ce stade le plus dur est fait, le reste est long, fastidieux et nécessaire mais plus simple, ce n'est que de l'install.
 
 
-Partie 2 : # pacman -S paquet
+
+Partie 2 : # pacman -S --noconfirm paquet
+
+Maj Avril 2018
+Sur une seconde clé usb copier le contenu du cache situé dans : /var/cache/pacman/pkg
+de la distribution courante (1.8G ce qui n'est pas énorme). Juste avant une clean-install faire un rsync du cache du système archlinux
+en cours vers la clé (maj des paquets la plus récente possible), puis monter cette clé sur la nouvelle bécane, y copier le contenu au
+même emplacement et procéder aux instructions qui suivent.
+Au lieu de récupérer les paquets depuis la connexion internet via un cache distant, pacman va le faire depuis son cache local,
+ça va être d'autant plus rapide que ladite connexion internet n'est justement pas très rapide.
+
+# À tester la prochaine fois : automatisation "extrême" de la mort qui tue :
+l="15 17 20 23 24 27 28 32 33 34 38 39 42 46 48 50 52"; for i in $l;do eval $(awk "NR==$i" archinstall.part2);done
 
 # Installer le serveur graphique
-pacman -S lxdm xorg-xrandr xorg-fonts-100dpi xorg-fonts-75dpi xterm 
-# installer le pilote graphique propriétaire nvidia et ses utilitaires :  (pour les possesseurs de cartes graphiques 
-# nvidia évidemment)
-pacman -S nvidia nvidia-libgl nvidia-utils nvidia-settings
+pacman -S --noconfirm lxdm xorg-xrandr xorg-fonts-100dpi xorg-fonts-75dpi xterm 
+# installer le pilote graphique propriétaire nvidia et ses utilitaires :  (pour les possesseurs de cartes graphiques nvidia évidemment)
+pacman -S --noconfirm nvidia nvidia-libgl nvidia-utils nvidia-settings
 
 # Installer xfce4
-pacman -S exo garcon gtk-xfce-engine libxfce4ui libxfce4util pacman thunar thunar-volman xfburn xfce4-artwork
-xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd 
-xfce4-panel xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager
-xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes
+pacman -S --noconfirm exo garcon gtk-xfce-engine libxfce4ui libxfce4util pacman thunar thunar-volman xfburn xfce4-artwork xfce4-cpufreq-plugin xfce4-cpugraph-plugin xfce4-datetime-plugin xfce4-mount-plugin xfce4-netload-plugin xfce4-notifyd xfce4-panel xfce4-pulseaudio-plugin xfce4-screenshooter xfce4-session xfce4-settings xfce4-systemload-plugin xfce4-taskmanager xfce4-terminal xfce4-timer-plugin xfce4-weather-plugin xfce4-xkb-plugin xfconf xfdesktop xfwm4 xfwm4-themes
 
 # Installer des utilitaires et des codecs multimédia
-pacman -S p7zip zip unzip unrar scrot gedit evince eog ghex
-pacman -S gst-plugins-base gst-plugins-good gst-plugins-ugly tumbler
+pacman -S --noconfirm p7zip zip unzip unrar scrot gedit evince eog ghex
+pacman -S --noconfirm gst-plugins-base gst-plugins-good gst-plugins-ugly tumbler
 
 # Installer l'audio et les apps internet
-pacman -S pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils
-pacman -S firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web opera chromium jre8-openjdk curl lftp flashplugin
-rsync screen tmux easy-rsa nmap simplescreenrecorder libdvdcss lsof par2cmdline ruby  yasm
+pacman -S --noconfirm pulseaudio pulseaudio-alsa pavucontrol pulseaudio-equalizer pulseaudio-jack alsa-utils
+pacman -S --noconfirm firefox firefox-i18n-fr thunderbird thunderbird-i18n-fr icedtea-web opera chromium jre8-openjdk curl lftp flashplugin rsync screen tmux easy-rsa nmap simplescreenrecorder libdvdcss lsof par2cmdline ruby  yasm
 
 # Installer les paquets nécessaires pour tracer des courbes, pour qarte, pour le monitoring du cpu
 # et les entêtes du noyau pour compiler des drivers de matériels exotiques / récents
-pacman -S python2-numpy python2-matplotlib gnuplot     # Enlever le cas-écheant le 2 pour la version 3 de python
-pacman -S qt5-svg
-pacman -S cpupower linux-headers arch-install-scripts 
+pacman -S --noconfirm python2-numpy python2-matplotlib gnuplot     # Enlever le cas-écheant le 2 pour la version 3 de python
+pacman -S --noconfirm qt5-svg
+pacman -S --noconfirm cpupower linux-headers arch-install-scripts 
 # arch-install-scripts c'est pour arch-chroot (entre-autre)
 
 # Install d'apps diverses et variées
-pacman -S os-prober mplayer smplayer vlc iscan iscan-data perl-tk tk gparted gimp gimp-help-fr pinta inkscape blender handbrake 
-fbreader gdb gvfs ntfs-3g ntp ttf-bitstream-vera xscreensaver ttf-freefont ttf-liberation beep busybox cronie dosfstools 
-font-bitstream-speedo fuse openssh openvpn truecrypt file-roller pkgfile net-tools mtr wireshark-gtk
+pacman -S --noconfirm os-prober mplayer smplayer vlc iscan iscan-data perl-tk tk gparted gimp gimp-help-fr pinta inkscape blender handbrake fbreader gdb gvfs ntfs-3g ntp ttf-bitstream-vera xscreensaver 
+pacman -S ttf-freefont ttf-liberation beep busybox cronie dosfstools font-bitstream-speedo fuse openssh openvpn truecrypt file-roller pkgfile net-tools mtr
 # traceroute netstat ne s'installent pas avec pacman
 # Imprimante
-pacman -S cups system-config-printer
+pacman -S --noconfirm cups system-config-printer
 
 # activation des services méritants de l'être
 # activer la synchronisation avec les serveurs de temps d'archlinux sur internet
@@ -200,6 +206,11 @@ pacman -S expac
 
 # Voir ensuite avec libreoffice (fresh ou still)
 
+#install du pilote d'imprimante epson XP-760
+yaourt epson
+# puis choisir le numero 75
+# aur/epson-inkjet-printer-escpr 1.6.20-1 (au 20/04/2018)
+
 # monitoring et benchs hardware
 pacman -S lm_sensors i2c-tools xsensors hdparm hddtemp smartmontools
 yaourt -S i-nex-git  # spectaculaire et complet
@@ -209,9 +220,3 @@ yaourt -S glxgears
 
 # transfert des fichiers du smartphone vers l'ordi (ou l'inverse)
 yaourt -S simple-mtpfs  
-
-cat 'Y' > affirmatif
-l="4 6 9 12 13 16 17 21 22 23 27 31 35 37 39 41"
-# ici les numéros de lignes ci-dessus correspondent avec ceux du fichier archinstall.part2.txt, pas avec ceux de
-ce fichier, attention
-for i in $l;do eval $(awk "NR==$i" archinstall-part2.txt) < affirmatif;done
